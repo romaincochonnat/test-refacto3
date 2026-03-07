@@ -13,8 +13,52 @@ describe('ShoppingController', () => {
   });
 
   it('should not throw for standard customer with no items', () => {
-    expect(() =>
-      controller.getPrice({ items: [], type: 'STANDARD_CUSTOMER' }),
-    ).not.toThrow();
+    const basket = { items: [], type: 'STANDARD_CUSTOMER' };
+    expect(() => controller.getPrice(basket)).not.toThrow();
+  });
+
+  it('should throw for basket with unknwon type customer', () => {
+    const basket = { items: [], type: 'XXXX_CUSTOMER' };
+    expect(() => controller.getPrice(basket)).toThrow();
+  });
+
+  it('should return 180 for standard customer with 1 TSHIRT + 1 DRESS + 1 JACKET', () => {
+    const basket = {
+      items: [
+        { type: 'TSHIRT', nb: 1 },
+        { type: 'DRESS', nb: 1 },
+        { type: 'JACKET', nb: 1 },
+      ],
+      type: 'STANDARD_CUSTOMER',
+    };
+
+    const basketPrice = controller.getPrice(basket);
+    expect(basketPrice).toBe('180');
+  });
+
+  it('should return 90 for platinum customer with 1 TSHIRT + 1 DRESS + 1 JACKET', () => {
+    const basket = {
+      items: [
+        { type: 'TSHIRT', nb: 1 },
+        { type: 'DRESS', nb: 1 },
+        { type: 'JACKET', nb: 1 },
+      ],
+      type: 'PLATINUM_CUSTOMER',
+    };
+
+    const basketPrice = controller.getPrice(basket);
+    expect(basketPrice).toBe('90');
+  });
+
+  it('should throw if basketPrice > 200 for standard customer', () => {
+    const basket = {
+      items: [
+        { type: 'TSHIRT', nb: 1 },
+        { type: 'DRESS', nb: 1 },
+        { type: 'JACKET', nb: 2 },
+      ],
+      type: 'STANDARD_CUSTOMER',
+    };
+    expect(() => controller.getPrice(basket)).toThrow();
   });
 });
