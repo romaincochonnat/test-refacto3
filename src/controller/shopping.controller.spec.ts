@@ -17,7 +17,7 @@ describe('ShoppingController', () => {
     expect(() => controller.getPrice(basket)).not.toThrow();
   });
 
-  it('should throw for basket with unknwon type customer', () => {
+  it('should throw for basket with unknown type customer', () => {
     const basket = { items: [], type: 'XXXX_CUSTOMER' };
     expect(() => controller.getPrice(basket)).toThrow();
   });

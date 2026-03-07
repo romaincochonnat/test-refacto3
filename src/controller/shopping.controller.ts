@@ -17,7 +17,7 @@ class Item {
   }
 }
 
-class ShoppingBody {
+class Basket {
   items: Item[] | null;
   type: string;
 
@@ -27,12 +27,28 @@ class ShoppingBody {
   }
 }
 
+const CUSTOMER_DISCOUNT: Record<string, number> = {
+  STANDARD_CUSTOMER: 1,
+  PREMIUM_CUSTOMER: 0.9,
+  PLATINUM_CUSTOMER: 0.5,
+};
+
 @Controller('shopping')
 export class ShoppingController {
   private logger = new Logger(ShoppingController.name);
 
+  constructor() {}
+
+  public getCustomerDiscount(basket: Basket): number {
+    const customerType = basket.type;
+    const customerDiscount = CUSTOMER_DISCOUNT[customerType];
+    if (customerDiscount === undefined)
+      throw new Error('400: Bad request - unknown customer type');
+    return customerDiscount;
+  }
+
   @Post()
-  getPrice(@Body() b: ShoppingBody): string {
+  getPrice(@Body() b: Basket): string {
     let p = 0;
     let d: number;
 
@@ -41,16 +57,7 @@ export class ShoppingController {
       date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    // Compute discount for customer
-    if (b.type === 'STANDARD_CUSTOMER') {
-      d = 1;
-    } else if (b.type === 'PREMIUM_CUSTOMER') {
-      d = 0.9;
-    } else if (b.type === 'PLATINUM_CUSTOMER') {
-      d = 0.5;
-    } else {
-      throw new HttpException('Bad request', HttpStatus.BAD_REQUEST);
-    }
+    d = this.getCustomerDiscount(b);
 
     // Compute total amount depending on the types and quantity of product and
     // if we are in winter or summer discounts periods
