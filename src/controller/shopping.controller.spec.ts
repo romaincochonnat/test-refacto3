@@ -62,3 +62,27 @@ describe('ShoppingController', () => {
     expect(() => controller.getPrice(basket)).toThrow();
   });
 });
+
+describe('getCustomerDiscount', () => {
+  let controller: ShoppingController;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      controllers: [ShoppingController],
+    }).compile();
+
+    controller = module.get<ShoppingController>(ShoppingController);
+  });
+  it('should return 0.9 if basket type = PREMIUM_CUSTOMER', () => {
+    const basket = {
+      items: [
+        { type: 'TSHIRT', nb: 1 },
+        { type: 'DRESS', nb: 1 },
+        { type: 'JACKET', nb: 2 },
+      ],
+      type: 'PREMIUM_CUSTOMER',
+    };
+    const discount = controller.getCustomerDiscount(basket);
+    expect(discount).toBe(0.9);
+  });
+});
