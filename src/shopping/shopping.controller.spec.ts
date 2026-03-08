@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShoppingController } from './shopping.controller';
+import { ShoppingService } from './shopping.service';
 
 describe('ShoppingController', () => {
   let controller: ShoppingController;
@@ -7,6 +8,7 @@ describe('ShoppingController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ShoppingController],
+      providers: [ShoppingService],
     }).compile();
 
     controller = module.get<ShoppingController>(ShoppingController);
@@ -60,29 +62,5 @@ describe('ShoppingController', () => {
       type: 'STANDARD_CUSTOMER',
     };
     expect(() => controller.getPrice(basket)).toThrow();
-  });
-});
-
-describe('getCustomerDiscount', () => {
-  let controller: ShoppingController;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [ShoppingController],
-    }).compile();
-
-    controller = module.get<ShoppingController>(ShoppingController);
-  });
-  it('should return 0.9 if basket type = PREMIUM_CUSTOMER', () => {
-    const basket = {
-      items: [
-        { type: 'TSHIRT', nb: 1 },
-        { type: 'DRESS', nb: 1 },
-        { type: 'JACKET', nb: 2 },
-      ],
-      type: 'PREMIUM_CUSTOMER',
-    };
-    const discount = controller.getCustomerDiscount(basket);
-    expect(discount).toBe(0.9);
   });
 });

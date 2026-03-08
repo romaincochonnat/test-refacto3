@@ -1,31 +1,5 @@
-import {
-  Body,
-  Controller,
-  Post,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
-
-class Item {
-  type: string;
-  nb: number;
-
-  constructor(type?: string, nb?: number) {
-    this.type = type ?? '';
-    this.nb = nb ?? 0;
-  }
-}
-
-class Basket {
-  items: Item[] | null;
-  type: string;
-
-  constructor(items?: Item[], type?: string) {
-    this.items = items ?? null;
-    this.type = type ?? '';
-  }
-}
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Basket } from './shopping.controller';
 
 const CUSTOMER_TYPE = [
   'STANDARD_CUSTOMER',
@@ -63,12 +37,8 @@ const ITEM_PRICE: Record<string, number> = {
   JACKET: 100,
 };
 
-@Controller('shopping')
-export class ShoppingController {
-  private logger = new Logger(ShoppingController.name);
-
-  constructor() {}
-
+@Injectable()
+export class ShoppingService {
   public getCustomerDiscount(basket: Basket): number {
     const customerType = basket.type;
     const customerDiscount = CUSTOMER_DISCOUNT[customerType];
@@ -122,19 +92,5 @@ export class ShoppingController {
       basketPrice += ITEM_PRICE[item.type] * item.nb * this.getPeriodDiscount(date, item.type) * this.getCustomerDiscount(basket)
     }
     return basketPrice;
-  }
-
-  @Post()
-  getPrice(@Body() basket: Basket): string {
-    const date = new Date();
-    const cal = new Date(
-      date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
-    );
-
-    const basketPrice = this.calculateTotalBasketPrice(basket, cal);
-
-    this.validateBasketMaxPrice(basket, basketPrice);
-
-    return String(basketPrice);
   }
 }
