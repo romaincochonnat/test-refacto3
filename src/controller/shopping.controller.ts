@@ -27,6 +27,12 @@ class Basket {
   }
 }
 
+const CUSTOMER_TYPE = [
+  'STANDARD_CUSTOMER',
+  'PREMIUM_CUSTOMER',
+  'PLATINUM_CUSTOMER',
+];
+
 const CUSTOMER_TYPE_NAME: Record<string, string> = {
   STANDARD_CUSTOMER: 'standard',
   PREMIUM_CUSTOMER: 'premium',
@@ -49,6 +55,12 @@ const PERIOD_DISCOUNT: Record<string, number> = {
   TSHIRT: 1,
   DRESS: 0.8,
   JACKET: 0.9,
+};
+
+const ITEM_PRICE: Record<string, number> = {
+  TSHIRT: 30,
+  DRESS: 50,
+  JACKET: 100,
 };
 
 @Controller('shopping')
@@ -98,38 +110,28 @@ export class ShoppingController {
     }
   }
 
+  public calculateTotalBasketPrice(basket: Basket, date: Date) {
+    if (basket.items === null) {
+      return 0;
+    } else if (!CUSTOMER_TYPE.includes(basket.type)) {
+      throw new Error('400: Bad request - unknown customer type');
+    }
+    let basketPrice = 0;
+    for (const item of basket.items) {
+      // eslint-disable-next-line prettier/prettier
+      basketPrice += ITEM_PRICE[item.type] * item.nb * this.getPeriodDiscount(date, item.type) * this.getCustomerDiscount(basket)
+    }
+    return basketPrice;
+  }
+
   @Post()
   getPrice(@Body() basket: Basket): string {
-    let basketPrice = 0;
-    let customerDiscount: number;
-
     const date = new Date();
     const cal = new Date(
       date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    customerDiscount = this.getCustomerDiscount(basket);
-
-    // Compute total amount depending on the types and quantity of product and
-
-    if (basket.items === null) {
-      return '0';
-    }
-
-    for (let i = 0; i < basket.items.length; i++) {
-      const item = basket.items[i];
-
-      if (item.type === 'TSHIRT') {
-        // eslint-disable-next-line prettier/prettier
-          basketPrice += 30 * item.nb * this.getPeriodDiscount(cal,item.type) * customerDiscount;
-      } else if (item.type === 'DRESS') {
-        // eslint-disable-next-line prettier/prettier
-          basketPrice += 50 * item.nb * this.getPeriodDiscount(cal,item.type) *  customerDiscount;
-      } else if (item.type === 'JACKET') {
-        // eslint-disable-next-line prettier/prettier
-          basketPrice += 100 * item.nb * this.getPeriodDiscount(cal,item.type) *  customerDiscount;
-      }
-    }
+    const basketPrice = this.calculateTotalBasketPrice(basket, cal);
 
     this.validateBasketMaxPrice(basket, basketPrice);
 
