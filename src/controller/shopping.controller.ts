@@ -27,10 +27,22 @@ class Basket {
   }
 }
 
+const CUSTOMER_TYPE_NAME: Record<string, string> = {
+  STANDARD_CUSTOMER: 'standard',
+  PREMIUM_CUSTOMER: 'premium',
+  PLATINUM_CUSTOMER: 'platinum',
+};
+
 const CUSTOMER_DISCOUNT: Record<string, number> = {
   STANDARD_CUSTOMER: 1,
   PREMIUM_CUSTOMER: 0.9,
   PLATINUM_CUSTOMER: 0.5,
+};
+
+const CUSTOMER_MAX_PRICE: Record<string, number> = {
+  STANDARD_CUSTOMER: 200,
+  PREMIUM_CUSTOMER: 800,
+  PLATINUM_CUSTOMER: 2000,
 };
 
 const PERIOD_DISCOUNT: Record<string, number> = {
@@ -68,6 +80,24 @@ export class ShoppingController {
     }
   }
 
+  public getCustomerMaxPrice(basket: Basket) {
+    const customerType = basket.type;
+    const customerMaxPrice = CUSTOMER_MAX_PRICE[customerType];
+    return customerMaxPrice;
+  }
+
+  public validateBasketMaxPrice(basket: Basket, basketPrice: number) {
+    try {
+      if (basketPrice > this.getCustomerMaxPrice(basket)) {
+        throw new Error(
+          `Price (${basketPrice}) is too high for ${CUSTOMER_TYPE_NAME[basket.type]}  customer`,
+        );
+      }
+    } catch (error) {
+      throw new HttpException((error as Error).message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Post()
   getPrice(@Body() basket: Basket): string {
     let basketPrice = 0;
@@ -101,35 +131,7 @@ export class ShoppingController {
       }
     }
 
-    try {
-      if (basket.type === 'STANDARD_CUSTOMER') {
-        if (basketPrice > 200) {
-          throw new Error(
-            `Price (${basketPrice}) is too high for standard customer`,
-          );
-        }
-      } else if (basket.type === 'PREMIUM_CUSTOMER') {
-        if (basketPrice > 800) {
-          throw new Error(
-            `Price (${basketPrice}) is too high for premium customer`,
-          );
-        }
-      } else if (basket.type === 'PLATINUM_CUSTOMER') {
-        if (basketPrice > 2000) {
-          throw new Error(
-            `Price (${basketPrice}) is too high for platinum customer`,
-          );
-        }
-      } else {
-        if (basketPrice > 200) {
-          throw new Error(
-            `Price (${basketPrice}) is too high for standard customer`,
-          );
-        }
-      }
-    } catch (e) {
-      throw new HttpException((e as Error).message, HttpStatus.BAD_REQUEST);
-    }
+    this.validateBasketMaxPrice(basket, basketPrice);
 
     return String(basketPrice);
   }
