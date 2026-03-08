@@ -33,6 +33,12 @@ const CUSTOMER_DISCOUNT: Record<string, number> = {
   PLATINUM_CUSTOMER: 0.5,
 };
 
+const PERIOD_DISCOUNT: Record<string, number> = {
+  TSHIRT: 1,
+  DRESS: 0.8,
+  JACKET: 0.9,
+};
+
 @Controller('shopping')
 export class ShoppingController {
   private logger = new Logger(ShoppingController.name);
@@ -45,6 +51,21 @@ export class ShoppingController {
     if (customerDiscount === undefined)
       throw new Error('400: Bad request - unknown customer type');
     return customerDiscount;
+  }
+
+  public getPeriodDiscount(date: Date, itemType: string): number {
+    const periodDiscount = PERIOD_DISCOUNT[itemType];
+    const noPeriodDiscount = 1;
+    if (periodDiscount === undefined) return noPeriodDiscount;
+    if (
+      date.getDate() < 15 &&
+      date.getDate() > 5 &&
+      (date.getMonth() === 5 || date.getMonth() === 0)
+    ) {
+      return periodDiscount;
+    } else {
+      return noPeriodDiscount;
+    }
   }
 
   @Post()
@@ -60,47 +81,23 @@ export class ShoppingController {
     customerDiscount = this.getCustomerDiscount(basket);
 
     // Compute total amount depending on the types and quantity of product and
-    // if we are in winter or summer discounts periods
-    if (
-      !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 5) &&
-      !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 0)
-    ) {
-      if (basket.items === null) {
-        return '0';
-      }
 
-      for (let i = 0; i < basket.items.length; i++) {
-        const it = basket.items[i];
+    if (basket.items === null) {
+      return '0';
+    }
 
-        if (it.type === 'TSHIRT') {
-          basketPrice += 30 * it.nb * customerDiscount;
-        } else if (it.type === 'DRESS') {
-          basketPrice += 50 * it.nb * customerDiscount;
-        } else if (it.type === 'JACKET') {
-          basketPrice += 100 * it.nb * customerDiscount;
-        }
-        // else if (it.type === "SWEATSHIRT") {
-        //   p += 80 * it.nb;
-        // }
-      }
-    } else {
-      if (basket.items === null) {
-        return '0';
-      }
+    for (let i = 0; i < basket.items.length; i++) {
+      const item = basket.items[i];
 
-      for (let i = 0; i < basket.items.length; i++) {
-        const it = basket.items[i];
-
-        if (it.type === 'TSHIRT') {
-          basketPrice += 30 * it.nb * customerDiscount;
-        } else if (it.type === 'DRESS') {
-          basketPrice += 50 * it.nb * 0.8 * customerDiscount;
-        } else if (it.type === 'JACKET') {
-          basketPrice += 100 * it.nb * 0.9 * customerDiscount;
-        }
-        // else if (it.type === "SWEATSHIRT") {
-        //   p += 80 * it.nb;
-        // }
+      if (item.type === 'TSHIRT') {
+        // eslint-disable-next-line prettier/prettier
+          basketPrice += 30 * item.nb * this.getPeriodDiscount(cal,item.type) * customerDiscount;
+      } else if (item.type === 'DRESS') {
+        // eslint-disable-next-line prettier/prettier
+          basketPrice += 50 * item.nb * this.getPeriodDiscount(cal,item.type) *  customerDiscount;
+      } else if (item.type === 'JACKET') {
+        // eslint-disable-next-line prettier/prettier
+          basketPrice += 100 * item.nb * this.getPeriodDiscount(cal,item.type) *  customerDiscount;
       }
     }
 
