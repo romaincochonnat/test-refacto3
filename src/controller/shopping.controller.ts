@@ -48,16 +48,16 @@ export class ShoppingController {
   }
 
   @Post()
-  getPrice(@Body() b: Basket): string {
-    let p = 0;
-    let d: number;
+  getPrice(@Body() basket: Basket): string {
+    let basketPrice = 0;
+    let customerDiscount: number;
 
     const date = new Date();
     const cal = new Date(
       date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    d = this.getCustomerDiscount(b);
+    customerDiscount = this.getCustomerDiscount(basket);
 
     // Compute total amount depending on the types and quantity of product and
     // if we are in winter or summer discounts periods
@@ -65,38 +65,38 @@ export class ShoppingController {
       !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 5) &&
       !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 0)
     ) {
-      if (b.items === null) {
+      if (basket.items === null) {
         return '0';
       }
 
-      for (let i = 0; i < b.items.length; i++) {
-        const it = b.items[i];
+      for (let i = 0; i < basket.items.length; i++) {
+        const it = basket.items[i];
 
         if (it.type === 'TSHIRT') {
-          p += 30 * it.nb * d;
+          basketPrice += 30 * it.nb * customerDiscount;
         } else if (it.type === 'DRESS') {
-          p += 50 * it.nb * d;
+          basketPrice += 50 * it.nb * customerDiscount;
         } else if (it.type === 'JACKET') {
-          p += 100 * it.nb * d;
+          basketPrice += 100 * it.nb * customerDiscount;
         }
         // else if (it.type === "SWEATSHIRT") {
         //   p += 80 * it.nb;
         // }
       }
     } else {
-      if (b.items === null) {
+      if (basket.items === null) {
         return '0';
       }
 
-      for (let i = 0; i < b.items.length; i++) {
-        const it = b.items[i];
+      for (let i = 0; i < basket.items.length; i++) {
+        const it = basket.items[i];
 
         if (it.type === 'TSHIRT') {
-          p += 30 * it.nb * d;
+          basketPrice += 30 * it.nb * customerDiscount;
         } else if (it.type === 'DRESS') {
-          p += 50 * it.nb * 0.8 * d;
+          basketPrice += 50 * it.nb * 0.8 * customerDiscount;
         } else if (it.type === 'JACKET') {
-          p += 100 * it.nb * 0.9 * d;
+          basketPrice += 100 * it.nb * 0.9 * customerDiscount;
         }
         // else if (it.type === "SWEATSHIRT") {
         //   p += 80 * it.nb;
@@ -105,27 +105,35 @@ export class ShoppingController {
     }
 
     try {
-      if (b.type === 'STANDARD_CUSTOMER') {
-        if (p > 200) {
-          throw new Error(`Price (${p}) is too high for standard customer`);
+      if (basket.type === 'STANDARD_CUSTOMER') {
+        if (basketPrice > 200) {
+          throw new Error(
+            `Price (${basketPrice}) is too high for standard customer`,
+          );
         }
-      } else if (b.type === 'PREMIUM_CUSTOMER') {
-        if (p > 800) {
-          throw new Error(`Price (${p}) is too high for premium customer`);
+      } else if (basket.type === 'PREMIUM_CUSTOMER') {
+        if (basketPrice > 800) {
+          throw new Error(
+            `Price (${basketPrice}) is too high for premium customer`,
+          );
         }
-      } else if (b.type === 'PLATINUM_CUSTOMER') {
-        if (p > 2000) {
-          throw new Error(`Price (${p}) is too high for platinum customer`);
+      } else if (basket.type === 'PLATINUM_CUSTOMER') {
+        if (basketPrice > 2000) {
+          throw new Error(
+            `Price (${basketPrice}) is too high for platinum customer`,
+          );
         }
       } else {
-        if (p > 200) {
-          throw new Error(`Price (${p}) is too high for standard customer`);
+        if (basketPrice > 200) {
+          throw new Error(
+            `Price (${basketPrice}) is too high for standard customer`,
+          );
         }
       }
     } catch (e) {
       throw new HttpException((e as Error).message, HttpStatus.BAD_REQUEST);
     }
 
-    return String(p);
+    return String(basketPrice);
   }
 }
