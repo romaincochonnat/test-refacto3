@@ -39,6 +39,12 @@ export const SEASON_DISCOUNT: Record<string, number> = {
   JACKET: 0.9,
 };
 
+export const ITEM_PRICE: Record<string, number> = {
+  TSHIRT: 30,
+  DRESS: 50,
+  JACKET: 100,
+};
+
 @Controller('shopping')
 export class ShoppingController {
   private logger = new Logger(ShoppingController.name);
@@ -68,25 +74,26 @@ export class ShoppingController {
     }
   }
 
+  public calculateBasketPrice(basket: Basket) {
+    if (basket.items === null) {
+      return 0;
+    }
+    const customerDiscount = this.getCustomerDiscount(basket);
+    const basketPrice = basket.items?.reduce(
+      (total, item) =>
+        (total +=
+          ITEM_PRICE[item.type] *
+          item.nb *
+          this.getSeasonDiscount(item) *
+          customerDiscount),
+      0,
+    );
+    return basketPrice;
+  }
+
   @Post()
   getPrice(@Body() basket: Basket): string {
-    let price = 0;
-    const customerDiscount: number = this.getCustomerDiscount(basket);
-    if (basket.items === null) {
-      return '0';
-    }
-
-    for (let i = 0; i < basket.items.length; i++) {
-      const it = basket.items[i];
-
-      if (it.type === 'TSHIRT') {
-        price += 30 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
-      } else if (it.type === 'DRESS') {
-        price += 50 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
-      } else if (it.type === 'JACKET') {
-        price += 100 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
-      }
-    }
+    const price = this.calculateBasketPrice(basket);
 
     try {
       if (basket.type === 'STANDARD_CUSTOMER') {
