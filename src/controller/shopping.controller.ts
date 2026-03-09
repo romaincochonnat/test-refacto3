@@ -33,6 +33,12 @@ export const CUSTOMER_DISCOUNT: Record<string, number> = {
   PLATINUM_CUSTOMER: 0.5,
 };
 
+export const SEASON_DISCOUNT: Record<string, number> = {
+  TSHIRT: 1,
+  DRESS: 0.8,
+  JACKET: 0.9,
+};
+
 @Controller('shopping')
 export class ShoppingController {
   private logger = new Logger(ShoppingController.name);
@@ -46,58 +52,39 @@ export class ShoppingController {
     return CUSTOMER_DISCOUNT[customerType];
   }
 
-  @Post()
-  getPrice(@Body() basket: Basket): string {
-    let price = 0;
-    const discount: number = this.getCustomerDiscount(basket);
-
+  public getSeasonDiscount(item: Item) {
     const date = new Date();
     const cal = new Date(
       date.toLocaleString('en-US', { timeZone: 'Europe/Paris' }),
     );
 
-    // Compute total amount depending on the types and quantity of product and
-    // if we are in winter or summer discounts periods
     if (
       !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 5) &&
       !(cal.getDate() < 15 && cal.getDate() > 5 && cal.getMonth() === 0)
     ) {
-      if (basket.items === null) {
-        return '0';
-      }
-
-      for (let i = 0; i < basket.items.length; i++) {
-        const it = basket.items[i];
-
-        if (it.type === 'TSHIRT') {
-          price += 30 * it.nb * discount;
-        } else if (it.type === 'DRESS') {
-          price += 50 * it.nb * discount;
-        } else if (it.type === 'JACKET') {
-          price += 100 * it.nb * discount;
-        }
-        // else if (it.type === "SWEATSHIRT") {
-        //   p += 80 * it.nb;
-        // }
-      }
+      return 1;
     } else {
-      if (basket.items === null) {
-        return '0';
-      }
+      return SEASON_DISCOUNT[item.type];
+    }
+  }
 
-      for (let i = 0; i < basket.items.length; i++) {
-        const it = basket.items[i];
+  @Post()
+  getPrice(@Body() basket: Basket): string {
+    let price = 0;
+    const customerDiscount: number = this.getCustomerDiscount(basket);
+    if (basket.items === null) {
+      return '0';
+    }
 
-        if (it.type === 'TSHIRT') {
-          price += 30 * it.nb * discount;
-        } else if (it.type === 'DRESS') {
-          price += 50 * it.nb * 0.8 * discount;
-        } else if (it.type === 'JACKET') {
-          price += 100 * it.nb * 0.9 * discount;
-        }
-        // else if (it.type === "SWEATSHIRT") {
-        //   p += 80 * it.nb;
-        // }
+    for (let i = 0; i < basket.items.length; i++) {
+      const it = basket.items[i];
+
+      if (it.type === 'TSHIRT') {
+        price += 30 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
+      } else if (it.type === 'DRESS') {
+        price += 50 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
+      } else if (it.type === 'JACKET') {
+        price += 100 * it.nb * this.getSeasonDiscount(it) * customerDiscount;
       }
     }
 
